@@ -1,0 +1,38 @@
+name: Manual tests (any server)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL to test (e.g. https://v2-dev.virtualflybrain.org/)'
+        required: true
+        default: 'https://v2-dev.virtualflybrain.org/'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests against ${{ github.event.inputs.base_url }}
+        run: npx playwright test
+        env:
+          VFB_BASE_URL: ${{ github.event.inputs.base_url }}
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
