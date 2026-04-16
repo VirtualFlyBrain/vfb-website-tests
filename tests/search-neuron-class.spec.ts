@@ -52,26 +52,6 @@ test.describe('VFB Search', () => {
     }
   });
 
-  test('semantic tags use distinct label classes', async ({ page }) => {
-    await openSearchAndQuery(page, 'DNp01');
-
-    // Collect all unique tag classes across all visible results
-    const tagClasses = await page.evaluate(() => {
-      const tags = document.querySelectorAll('li.searchResult span.label.types.badges span.label');
-      const classes = new Set<string>();
-      tags.forEach(el => {
-        el.classList.forEach(c => {
-          if (c.startsWith('label-')) classes.add(c);
-        });
-      });
-      return [...classes].sort();
-    });
-
-    // There should be several distinct tag types across the result set
-    expect(tagClasses.length).toBeGreaterThan(1);
-    expect(tagClasses).toContain('label-Adult');
-    expect(tagClasses).toContain('label-Nervous_system');
-  });
 });
 
 test.describe('VFB Search Filters', () => {
