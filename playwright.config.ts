@@ -41,7 +41,7 @@ export default defineConfig({
     // },
   ],
   /* Increase timeout for a remote site that may be slow to load */
-  timeout: 60_000,
+  timeout: 90_000,
   expect: {
     timeout: 15_000,
   },
