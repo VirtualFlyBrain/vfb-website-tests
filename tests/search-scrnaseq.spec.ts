@@ -58,13 +58,6 @@ test.describe('VFB Search — scRNAseq data (AFCA)', () => {
     expect(await datasetResults.count()).toBeGreaterThan(0);
   });
 
-  test('AFCA results include Cluster-tagged entries', async ({ page }) => {
-    await openSearchAndQuery(page, QUERY);
-
-    const clusterResults = page.locator('li.searchResult:has(span.label-Cluster)');
-    expect(await clusterResults.count()).toBeGreaterThan(0);
-  });
-
   test('some AFCA Cluster results carry Nervous_system tag', async ({ page }) => {
     await openSearchAndQuery(page, QUERY);
 
