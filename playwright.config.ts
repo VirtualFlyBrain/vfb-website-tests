@@ -15,7 +15,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  /* Single worker to avoid overloading the remote site with concurrent requests */
+  workers: 1,
   reporter: [
     ['list'],
     ['html', { open: 'never' }],
