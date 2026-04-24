@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { dismissQuickHelp, searchAndSelect } from './helpers';
+import { dismissQuickHelp, searchAndSelect, clickQueryAndExpectResults } from './helpers';
 
 // ── Classification link navigates to parent class ───────────────────────────
 
@@ -110,6 +110,7 @@ test.describe('VFB Term Info Links — cross references (VFB_00063821)', () => {
 // ── Query link returns results (FBbt_00045051) ──────────────────────────────
 
 test.describe('VFB Term Info Links — queries (FBbt_00045051)', () => {
+  test.setTimeout(180_000);
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -117,22 +118,15 @@ test.describe('VFB Term Info Links — queries (FBbt_00045051)', () => {
     await searchAndSelect(page, 'FBbt_00045051', 'FBbt_00045051');
   });
 
-  test('running a "Subclasses" query returns results', async ({ page }) => {
-    // Use "Subclasses of cantle" — returns child neuropil classes
-    const queryLink = page.locator('.Collapsible', { hasText: 'Query for' })
-      .locator('.Collapsible__contentInner').first()
-      .locator('a', { hasText: 'Subclasses of cantle' });
-    await queryLink.click();
-
-    // Query results appear in the page — wait for the results count indicator
-    // which shows as "N results" text, or result items to appear
-    await expect(page.locator('text=/\\d+ results/')).toBeVisible({ timeout: 120_000 });
+  test('"List all available images" query returns results', async ({ page }) => {
+    await clickQueryAndExpectResults(page, 'List all available images of cantle');
   });
 });
 
-// ── Neuron cross references resolve (VFB_jrchk7yg) ─────────────────────────
+// ── Neuron queries and cross references (VFB_jrchk7yg) ─────────────────────
 
-test.describe('VFB Term Info Links — neuron cross references (VFB_jrchk7yg)', () => {
+test.describe('VFB Term Info Links — neuron queries and cross references (VFB_jrchk7yg)', () => {
+  test.setTimeout(180_000);
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -155,5 +149,29 @@ test.describe('VFB Term Info Links — neuron cross references (VFB_jrchk7yg)', 
     const nbLink = crossRefs.locator('a[href*="neuronbridge"]').first();
     const href = await nbLink.getAttribute('href');
     expect(href).toContain('885788485');
+  });
+
+  test('"Neurons with similar morphology" query returns results', async ({ page }) => {
+    await clickQueryAndExpectResults(page, 'Neurons with similar morphology');
+  });
+
+  test('"Show neurons connected to" query returns results', async ({ page }) => {
+    await clickQueryAndExpectResults(page, 'Show neurons connected to');
+  });
+});
+
+// ── Neuron class queries (FBbt_00100163) ────────────────────────────────────
+
+test.describe('VFB Term Info Links — neuron class queries (FBbt_00100163)', () => {
+  test.setTimeout(180_000);
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await dismissQuickHelp(page);
+    await searchAndSelect(page, 'FBbt_00100163', 'FBbt_00100163');
+  });
+
+  test('"Single cell transcriptomics" query returns results', async ({ page }) => {
+    await clickQueryAndExpectResults(page, 'Single cell transcriptomics');
   });
 });

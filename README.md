@@ -198,7 +198,7 @@ Tests the Term Info panel content for six different VFB entity types. Each entit
 | shows cross references | "Insect Brain DB" |
 | shows references with citations | "Ito et al." and "Chiang et al." (using exact trigger match to avoid "Cross References") |
 
-#### `term-info-links.spec.ts` — link resolution across entity types (9 tests)
+#### `term-info-links.spec.ts` — link resolution and queries across entity types (12 tests)
 
 | Test | Description |
 |------|-------------|
@@ -208,9 +208,12 @@ Tests the Term Info panel content for six different VFB entity types. Each entit
 | DOI link points to a valid doi.org URL | href matches `https://doi.org/10.xxxx/...` |
 | FlyLight cross reference links to splitgal4.janelia.org | href contains "splitgal4.janelia.org" and "MB099C" |
 | NeuronBridge cross reference links to neuronbridge.janelia.org | href contains "neuronbridge.janelia.org" and "MB099C" |
-| running a "Subclasses" query returns results | Clicking "Subclasses of cantle" shows "N results" indicator |
+| "List all available images" query returns results | Clicking cantle images query shows results table with Imaging_Technique column |
 | Neuprint cross reference links to neuprint | href contains "neuprint" and body ID "885788485" |
 | NeuronBridge cross reference for neuron links correctly | href contains "neuronbridge" and "885788485" |
+| "Neurons with similar morphology" query returns results | NBLAST similarity query for WEDPN2A_R shows results with Score column |
+| "Show neurons connected to" query returns results | Connectivity query for WEDPN2A_R shows "N results" indicator |
+| "Single cell transcriptomics" query returns results | scRNAseq query for adult pacemaker neuron shows results table with Cell type column |
 
 ### Circuit Browser tests
 

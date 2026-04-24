@@ -30,6 +30,37 @@ export async function expectNameTags(page: Page, ...tagClasses: string[]) {
   }
 }
 
+/**
+ * Click a query link in the "Query for" section by text, scrolling it into view first.
+ * Then wait for query results to appear (either "N results" text or a results table).
+ */
+export async function clickQueryAndExpectResults(page: Page, linkText: string) {
+  const queryLink = page.locator('.Collapsible', { hasText: 'Query for' })
+    .locator('.Collapsible__contentInner').first()
+    .locator('a', { hasText: linkText });
+  await queryLink.scrollIntoViewIfNeeded();
+  await queryLink.click({ force: true });
+
+  // Wait for query results — different queries show results in different ways:
+  // - "N results" text (e.g. for similarity/connectivity queries processed in-app)
+  // - A results table with domain-specific headers (e.g. for image list queries)
+  // Some queries navigate to a new page that reloads the app.
+  // Wait for the navigation and new page to settle.
+  await page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 60_000 }).catch(() => {});
+  await page.waitForTimeout(5000);
+
+  // Different query types produce different result formats:
+  // - "N results" text (similarity/connectivity queries processed in-app)
+  // - A results table with domain-specific headers (image lists, transcriptomics, etc.)
+  await expect(
+    page.locator('text=/\\d+ results/')
+      .or(page.locator('th:has-text("Imaging_Technique")'))
+      .or(page.locator('th:has-text("Score")'))
+      .or(page.locator('th:has-text("Cell type")'))
+  ).toBeVisible({ timeout: 120_000 });
+}
+
 /** Check that a collapsible section exists and contains expected text. */
 export async function expectSection(page: Page, sectionName: string, ...expectedTexts: string[]) {
   const section = page.locator('.Collapsible', { hasText: sectionName })
