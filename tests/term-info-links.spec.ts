@@ -1,17 +1,5 @@
-import { test, expect, Page } from '@playwright/test';
-
-/** Open search, type a query, click the first result, and wait for Term Info to update. */
-async function searchAndSelect(page: Page, query: string, expectNameContains: string) {
-  await page.locator('i.fa-search.arrowsStyle').first().click();
-  const searchInput = page.locator('input#searchInput');
-  await expect(searchInput).toBeVisible({ timeout: 10_000 });
-  await searchInput.fill(query);
-  await expect(page.locator('li.searchResult').first()).toBeVisible({ timeout: 15_000 });
-  await page.locator('li.searchResult').first().click();
-  await expect(
-    page.locator('.Collapsible', { hasText: 'Name' }).locator('.Collapsible__contentInner').first()
-  ).toContainText(expectNameContains, { timeout: 30_000 });
-}
+import { test, expect } from '@playwright/test';
+import { dismissQuickHelp, searchAndSelect } from './helpers';
 
 // ── Classification link navigates to parent class ───────────────────────────
 
@@ -19,8 +7,7 @@ test.describe('VFB Term Info Links — classification (FBbt_00045051)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const skipBtn = page.locator('text=SKIP INTRO');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) await skipBtn.click();
+    await dismissQuickHelp(page);
     await searchAndSelect(page, 'FBbt_00045051', 'FBbt_00045051');
   });
 
@@ -44,8 +31,7 @@ test.describe('VFB Term Info Links — available images (FBbt_00045051)', () => 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const skipBtn = page.locator('text=SKIP INTRO');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) await skipBtn.click();
+    await dismissQuickHelp(page);
     await searchAndSelect(page, 'FBbt_00045051', 'FBbt_00045051');
   });
 
@@ -69,8 +55,7 @@ test.describe('VFB Term Info Links — references (Berg2025)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const skipBtn = page.locator('text=SKIP INTRO');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) await skipBtn.click();
+    await dismissQuickHelp(page);
     await searchAndSelect(page, 'Berg2025', 'Berg2025');
   });
 
@@ -101,8 +86,7 @@ test.describe('VFB Term Info Links — cross references (VFB_00063821)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const skipBtn = page.locator('text=SKIP INTRO');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) await skipBtn.click();
+    await dismissQuickHelp(page);
     await searchAndSelect(page, 'VFB_00063821', 'VFB_00063821');
   });
 
@@ -129,8 +113,7 @@ test.describe('VFB Term Info Links — queries (FBbt_00045051)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const skipBtn = page.locator('text=SKIP INTRO');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) await skipBtn.click();
+    await dismissQuickHelp(page);
     await searchAndSelect(page, 'FBbt_00045051', 'FBbt_00045051');
   });
 
@@ -153,8 +136,7 @@ test.describe('VFB Term Info Links — neuron cross references (VFB_jrchk7yg)', 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    const skipBtn = page.locator('text=SKIP INTRO');
-    if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) await skipBtn.click();
+    await dismissQuickHelp(page);
     await searchAndSelect(page, 'VFB_jrchk7yg', 'VFB_jrchk7yg');
   });
 
