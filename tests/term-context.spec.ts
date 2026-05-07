@@ -1,11 +1,19 @@
-import { test, expect } from '@playwright/test';
-import { dismissQuickHelp, searchAndSelect } from './helpers';
+import { test, expect, Page, TestInfo } from '@playwright/test';
+import {
+  dismissQuickHelp,
+  searchAndSelect,
+  LONG_TEST_TIMEOUT,
+  VERY_LONG_OP_TIMEOUT,
+  SLOW_FACTOR,
+  withTimeoutLabel,
+} from './helpers';
 
-// The Term Context graph takes time to load after navigation
-test.setTimeout(180_000);
+// The Term Context graph can take several minutes to load after navigation,
+// especially on the live site under load.
+test.setTimeout(VERY_LONG_OP_TIMEOUT + LONG_TEST_TIMEOUT);
 
 /** Read the force-graph node/link data from the VFBGraph React component. */
-async function readGraphData(page: import('@playwright/test').Page) {
+async function readGraphData(page: Page) {
   return await page.evaluate(() => {
     const container = document.querySelector('#VFBGraph .force-graph-container');
     if (!container) return null;
@@ -35,8 +43,35 @@ async function readGraphData(page: import('@playwright/test').Page) {
   });
 }
 
+/** Wait until the term-context graph has rendered nodes and visible canvas content. */
+async function waitForGraphReady(page: Page, testInfo?: TestInfo) {
+  await withTimeoutLabel(
+    'Term Context graph data + canvas to render',
+    async () =>
+      await expect(async () => {
+        const data = await readGraphData(page);
+        expect(data).not.toBeNull();
+        expect(data!.nodeCount).toBeGreaterThan(0);
+        const hasContent = await page.evaluate(() => {
+          const canvas = document.querySelector('#VFBGraph .force-graph-container canvas') as HTMLCanvasElement;
+          if (!canvas) return false;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return false;
+          const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let nonBlack = 0;
+          for (let i = 0; i < d.length; i += 16) {
+            if (d[i] + d[i + 1] + d[i + 2] > 30) nonBlack++;
+          }
+          return nonBlack > 50;
+        });
+        expect(hasContent).toBe(true);
+      }).toPass({ timeout: VERY_LONG_OP_TIMEOUT, intervals: [1000, 2000, 5000] }),
+    testInfo,
+  );
+}
+
 /** Check that the graph canvas has visible (non-black) content. */
-async function expectGraphHasContent(page: import('@playwright/test').Page) {
+async function expectGraphHasContent(page: Page) {
   const hasContent = await page.evaluate(() => {
     const canvas = document.querySelector('#VFBGraph .force-graph-container canvas') as HTMLCanvasElement;
     if (!canvas) return false;
@@ -53,26 +88,32 @@ async function expectGraphHasContent(page: import('@playwright/test').Page) {
 }
 
 /** Click a graph link in the "Graphs for" section and wait for the Term Context tab to appear. */
-async function openGraphView(page: import('@playwright/test').Page, linkText: string) {
+async function openGraphView(page: Page, linkText: string, testInfo?: TestInfo) {
   const graphLink = page.locator('.Collapsible', { hasText: 'Graphs for' })
     .locator('a', { hasText: linkText });
   await graphLink.scrollIntoViewIfNeeded();
   await graphLink.click({ force: true });
 
-  // Wait for the Term Context tab to appear and the graph to render
-  await expect(
-    page.locator('.flexlayout__tab_button_content:text-is("Term Context")')
-  ).toBeVisible({ timeout: 15_000 });
-  await page.waitForTimeout(5000);
+  // Wait for the Term Context tab to appear
+  await withTimeoutLabel(
+    'Term Context tab to appear',
+    () =>
+      expect(
+        page.locator('.flexlayout__tab_button_content:text-is("Term Context")'),
+      ).toBeVisible({ timeout: 15_000 * SLOW_FACTOR }),
+    testInfo,
+  );
+  // Wait for the graph data and canvas to actually render
+  await waitForGraphReady(page, testInfo);
 }
 
 test.describe('VFB Term Context — classification graph (FBbt_00004020)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
-    await searchAndSelect(page, 'FBbt_00004020', 'FBbt_00004020');
-    await openGraphView(page, 'Show classification');
+    await searchAndSelect(page, 'FBbt_00004020', 'FBbt_00004020', testInfo);
+    await openGraphView(page, 'Show classification', testInfo);
   });
 
   test('Term Context tab appears after clicking "Show classification"', async ({ page }) => {
@@ -127,15 +168,15 @@ test.describe('VFB Term Context — classification graph (FBbt_00004020)', () =>
 });
 
 test.describe('VFB Term Context — location graph (FBbt_00004020)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
-    await searchAndSelect(page, 'FBbt_00004020', 'FBbt_00004020');
+    await searchAndSelect(page, 'FBbt_00004020', 'FBbt_00004020', testInfo);
   });
 
-  test('"Show location" also opens the Term Context tab', async ({ page }) => {
-    await openGraphView(page, 'Show location');
+  test('"Show location" also opens the Term Context tab', async ({ page }, testInfo) => {
+    await openGraphView(page, 'Show location', testInfo);
 
     await expect(
       page.locator('.flexlayout__tab_button_content:text-is("Term Context")')
@@ -143,8 +184,8 @@ test.describe('VFB Term Context — location graph (FBbt_00004020)', () => {
     await expectGraphHasContent(page);
   });
 
-  test('switching between classification and location reloads the graph', async ({ page }) => {
-    await openGraphView(page, 'Show classification');
+  test('switching between classification and location reloads the graph', async ({ page }, testInfo) => {
+    await openGraphView(page, 'Show classification', testInfo);
     const classData = await readGraphData(page);
 
     // Switch to location
@@ -152,7 +193,8 @@ test.describe('VFB Term Context — location graph (FBbt_00004020)', () => {
       .locator('a', { hasText: 'Show location' }).scrollIntoViewIfNeeded();
     await page.locator('.Collapsible', { hasText: 'Graphs for' })
       .locator('a', { hasText: 'Show location' }).click({ force: true });
-    await page.waitForTimeout(5000);
+    // Wait for the new graph data to render
+    await waitForGraphReady(page, testInfo);
 
     const locData = await readGraphData(page);
 
@@ -166,12 +208,12 @@ test.describe('VFB Term Context — location graph (FBbt_00004020)', () => {
 // ── Location graph for a neuropil subdivision (FBbt_00110000) ───────────────
 
 test.describe('VFB Term Context — location graph (FBbt_00110000 / mushroom body alpha lobe slice)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
-    await searchAndSelect(page, 'FBbt_00110000', 'FBbt_00110000');
-    await openGraphView(page, 'Show location');
+    await searchAndSelect(page, 'FBbt_00110000', 'FBbt_00110000', testInfo);
+    await openGraphView(page, 'Show location', testInfo);
   });
 
   test('location graph renders with visible content', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
+import { LONG_TEST_TIMEOUT, LONG_OP_TIMEOUT, SLOW_FACTOR, withTimeoutLabel } from './helpers';
 
 // Circuit browser tests interact with a Neo4j backend that can be slow;
 // limit parallelism to avoid overwhelming the site
@@ -22,14 +23,18 @@ const LHCENT3_R = {
 };
 
 /** Navigate to the Circuit Browser tab and wait for it to load. */
-async function openCircuitBrowser(page: Page) {
+async function openCircuitBrowser(page: Page, testInfo?: import('@playwright/test').TestInfo) {
   await page.locator('text=Circuit Browser').first().click();
-  await page.locator('.neuron1 input').waitFor({ state: 'visible', timeout: 30_000 });
+  await withTimeoutLabel(
+    'Circuit Browser panel to load (.neuron1 input)',
+    () => page.locator('.neuron1 input').waitFor({ state: 'visible', timeout: LONG_OP_TIMEOUT }),
+    testInfo,
+  );
 }
 
 /** Run the MBON21 → LHCENT3_R connectivity query and wait for results. */
-async function runMBON21toLHCENT3Query(page: Page) {
-  await openCircuitBrowser(page);
+async function runMBON21toLHCENT3Query(page: Page, testInfo?: import('@playwright/test').TestInfo) {
+  await openCircuitBrowser(page, testInfo);
 
   await selectNeuron(page, '.neuron1 input', MBON21.searchTerm, MBON21.optionText);
   await selectNeuron(page, '.neuron2 input', LHCENT3_R.searchTerm, LHCENT3_R.optionText);
@@ -49,7 +54,7 @@ async function runMBON21toLHCENT3Query(page: Page) {
   // Run query and wait for the Neo4j response
   const responsePromise = page.waitForResponse(
     resp => resp.url().includes('neo4j/tx/commit') && resp.status() === 200,
-    { timeout: 90_000 }
+    { timeout: 90_000 * SLOW_FACTOR }
   );
   await page.locator('button:has-text("Run Query")').click();
   await responsePromise;
@@ -117,7 +122,9 @@ async function selectNeuron(
 }
 
 test.describe('VFB Circuit Browser', () => {
-  test.beforeEach(async ({ page }) => {
+  test.setTimeout(LONG_TEST_TIMEOUT);
+
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -127,8 +134,8 @@ test.describe('VFB Circuit Browser', () => {
     }
   });
 
-  test('Circuit Browser tab is visible and shows expected controls', async ({ page }) => {
-    await openCircuitBrowser(page);
+  test('Circuit Browser tab is visible and shows expected controls', async ({ page }, testInfo) => {
+    await openCircuitBrowser(page, testInfo);
 
     // Neuron input fields
     await expect(page.locator('.neuron1 input')).toBeVisible();
@@ -145,8 +152,8 @@ test.describe('VFB Circuit Browser', () => {
     await expect(page.locator('button:has-text("Clear")')).toBeVisible();
   });
 
-  test('Run Query button is disabled until both neurons are set', async ({ page }) => {
-    await openCircuitBrowser(page);
+  test('Run Query button is disabled until both neurons are set', async ({ page }, testInfo) => {
+    await openCircuitBrowser(page, testInfo);
 
     // Initially disabled (no neurons set)
     const runBtn = page.locator('button:has-text("Run Query")');
@@ -163,7 +170,9 @@ test.describe('VFB Circuit Browser', () => {
 });
 
 test.describe('VFB Circuit Browser — Neuron autocomplete (MBON21)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.setTimeout(LONG_TEST_TIMEOUT);
+
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -171,7 +180,7 @@ test.describe('VFB Circuit Browser — Neuron autocomplete (MBON21)', () => {
     if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await skipBtn.click();
     }
-    await openCircuitBrowser(page);
+    await openCircuitBrowser(page, testInfo);
   });
 
   test('typing MBON21 in Neuron 1 shows autocomplete options', async ({ page }) => {
@@ -196,7 +205,9 @@ test.describe('VFB Circuit Browser — Neuron autocomplete (MBON21)', () => {
 });
 
 test.describe('VFB Circuit Browser — Neuron autocomplete (MB-C1_R)', () => {
-  test.beforeEach(async ({ page }) => {
+  test.setTimeout(LONG_TEST_TIMEOUT);
+
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -204,7 +215,7 @@ test.describe('VFB Circuit Browser — Neuron autocomplete (MB-C1_R)', () => {
     if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await skipBtn.click();
     }
-    await openCircuitBrowser(page);
+    await openCircuitBrowser(page, testInfo);
   });
 
   test('typing MB-C1_R in Neuron 2 shows autocomplete options', async ({ page }) => {
@@ -228,7 +239,10 @@ test.describe('VFB Circuit Browser — Neuron autocomplete (MB-C1_R)', () => {
 });
 
 test.describe('VFB Circuit Browser — Query execution', () => {
-  test.beforeEach(async ({ page }) => {
+  // Neo4j connectivity queries can take a minute or more on the live site
+  test.setTimeout(LONG_TEST_TIMEOUT);
+
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -236,7 +250,7 @@ test.describe('VFB Circuit Browser — Query execution', () => {
     if (await skipBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
       await skipBtn.click();
     }
-    await openCircuitBrowser(page);
+    await openCircuitBrowser(page, testInfo);
   });
 
   test('running a query shows a loading indicator', async ({ page }) => {
@@ -256,8 +270,8 @@ test.describe('VFB Circuit Browser — Query execution', () => {
     await expect(page.locator('#VFBCircuitBrowser')).toBeVisible({ timeout: 10_000 });
   });
 
-  test('MBON21 → LHCENT3_R query returns connectivity results', async ({ page }) => {
-    await runMBON21toLHCENT3Query(page);
+  test('MBON21 → LHCENT3_R query returns connectivity results', async ({ page }, testInfo) => {
+    await runMBON21toLHCENT3Query(page, testInfo);
 
     // Results should show neurotransmitter type labels
     await expect(page.locator('li:text-is("Cholinergic")')).toBeVisible({ timeout: 10_000 });
@@ -287,10 +301,10 @@ test.describe('VFB Circuit Browser — Query execution', () => {
 
 test.describe('VFB Circuit Browser — Graph visualisation (MBON21 → LHCENT3_R)', () => {
   // Query takes time; run serially to avoid overloading the site
-  test.setTimeout(180_000);
+  test.setTimeout(LONG_TEST_TIMEOUT);
   test.describe.configure({ mode: 'serial' });
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
@@ -299,7 +313,7 @@ test.describe('VFB Circuit Browser — Graph visualisation (MBON21 → LHCENT3_R
       await skipBtn.click();
     }
 
-    await runMBON21toLHCENT3Query(page);
+    await runMBON21toLHCENT3Query(page, testInfo);
   });
 
   test('edge data includes synapse weight', async ({ page }) => {

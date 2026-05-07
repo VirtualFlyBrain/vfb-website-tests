@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { dismissQuickHelp } from './helpers';
+import { dismissQuickHelp, LONG_TEST_TIMEOUT, VERY_LONG_OP_TIMEOUT, withTimeoutLabel } from './helpers';
 
-// The ROI tree takes a long time to load (~50s)
-test.setTimeout(180_000);
+// The ROI tree takes a long time to load (~50s on production, longer on v2-dev)
+// The ROI tree is the slowest single operation in the suite — give the test
+// extra budget on top of the tree-load wait itself.
+test.setTimeout(VERY_LONG_OP_TIMEOUT + LONG_TEST_TIMEOUT);
 
 test.describe('VFB Template ROI Browser', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
@@ -14,7 +16,11 @@ test.describe('VFB Template ROI Browser', () => {
     await page.locator('.flexlayout__tab_button_content:text-is("Template ROI Browser")').click();
 
     // Wait for the ROI hierarchy tree to load (uses react-sortable-tree)
-    await page.locator('.rst__tree').waitFor({ state: 'visible', timeout: 120_000 });
+    await withTimeoutLabel(
+      'ROI hierarchy tree to load (.rst__tree)',
+      () => page.locator('.rst__tree').waitFor({ state: 'visible', timeout: VERY_LONG_OP_TIMEOUT }),
+      testInfo,
+    );
   });
 
   test('ROI tree loads with "adult brain" as the root node', async ({ page }) => {
@@ -99,15 +105,21 @@ test.describe('VFB Template ROI Browser', () => {
 });
 
 test.describe('VFB Template ROI Browser — deep navigation (SLP)', () => {
-  test.setTimeout(180_000);
+  // The ROI tree is the slowest single operation in the suite — give the test
+// extra budget on top of the tree-load wait itself.
+test.setTimeout(VERY_LONG_OP_TIMEOUT + LONG_TEST_TIMEOUT);
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }, testInfo) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
 
     await page.locator('.flexlayout__tab_button_content:text-is("Template ROI Browser")').click();
-    await page.locator('.rst__tree').waitFor({ state: 'visible', timeout: 120_000 });
+    await withTimeoutLabel(
+      'ROI hierarchy tree to load (.rst__tree)',
+      () => page.locator('.rst__tree').waitFor({ state: 'visible', timeout: VERY_LONG_OP_TIMEOUT }),
+      testInfo,
+    );
 
     // Navigate to: adult brain > adult cerebral ganglion > adult cerebrum > superior neuropils
     const expandPath = ['adult brain', 'adult cerebral ganglion', 'adult cerebrum', 'superior neuropils'];

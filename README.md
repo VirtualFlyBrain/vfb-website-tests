@@ -32,7 +32,33 @@ npx playwright test tests/term-info-neuron.spec.ts
 
 # Run tests matching a pattern
 npx playwright test --grep "search"
+```
 
+### Timeouts and slow-server scaling
+
+The live site can be slow under load and `v2-dev` (or any other non-production server) is typically slower still. The config detects the target server from `VFB_BASE_URL` and applies a 3× multiplier to all timeouts when not on production:
+
+|                              | Production (v2) | v2-dev / other  |
+|------------------------------|-----------------|-----------------|
+| Test timeout                 | 120s            | 360s            |
+| Expect timeout               | 20s             | 60s             |
+| Navigation timeout           | 60s             | 180s            |
+| Action timeout               | 60s             | 180s            |
+| Long-running tests           | 360s            | 1080s (18 min)  |
+| Long-running ops             | 240s            | 720s (12 min)   |
+| Very-long ops (ROI tree, big graphs) | 360s    | 1080s (18 min)  |
+| Internal helper waits        | 10s–30s         | 30s–90s         |
+
+### Identifying timeout failures in the HTML report
+
+Long waits in the helpers and slow specs are wrapped with `withTimeoutLabel(...)`. When a timeout occurs:
+
+- the failure message in the HTML report is prefixed with `[TIMEOUT] <description> — ...`
+- the test gets an annotation of type `timeout` (visible in the test's "Annotations" section)
+
+This makes timeout failures easy to distinguish from real assertion failures (e.g. wrong text, missing element). If you see `[TIMEOUT]` in the report, the underlying problem is usually that the site or a backend query was too slow rather than a regression.
+
+```bash
 # View the HTML report after a run
 npm run report
 ```

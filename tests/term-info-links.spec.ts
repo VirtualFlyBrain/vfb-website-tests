@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { dismissQuickHelp, searchAndSelect, clickQueryAndExpectResults } from './helpers';
+import { dismissQuickHelp, searchAndSelect, clickQueryAndExpectResults, LONG_TEST_TIMEOUT } from './helpers';
 
 // ── Classification link navigates to parent class ───────────────────────────
 
@@ -110,7 +110,7 @@ test.describe('VFB Term Info Links — cross references (VFB_00063821)', () => {
 // ── Query link returns results (FBbt_00045051) ──────────────────────────────
 
 test.describe('VFB Term Info Links — queries (FBbt_00045051)', () => {
-  test.setTimeout(180_000);
+  test.setTimeout(LONG_TEST_TIMEOUT);
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -126,7 +126,7 @@ test.describe('VFB Term Info Links — queries (FBbt_00045051)', () => {
 // ── Neuron queries and cross references (VFB_jrchk7yg) ─────────────────────
 
 test.describe('VFB Term Info Links — neuron queries and cross references (VFB_jrchk7yg)', () => {
-  test.setTimeout(180_000);
+  test.setTimeout(LONG_TEST_TIMEOUT);
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -163,7 +163,7 @@ test.describe('VFB Term Info Links — neuron queries and cross references (VFB_
 // ── Neuron class queries (FBbt_00100163) ────────────────────────────────────
 
 test.describe('VFB Term Info Links — neuron class queries (FBbt_00100163)', () => {
-  test.setTimeout(180_000);
+  test.setTimeout(LONG_TEST_TIMEOUT);
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
