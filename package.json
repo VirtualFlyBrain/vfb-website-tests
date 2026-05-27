@@ -7,7 +7,8 @@
     "test:ui": "npx playwright test --ui",
     "test:headed": "npx playwright test --headed",
     "test:v2-dev": "VFB_BASE_URL=https://v2-dev.virtualflybrain.org/ npx playwright test",
-    "report": "npx playwright show-report"
+    "report": "npx playwright show-report",
+    "summary": "node scripts/generate-summary.js"
   },
   "keywords": [],
   "author": "",

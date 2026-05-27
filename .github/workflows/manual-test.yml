@@ -29,10 +29,27 @@ jobs:
         env:
           VFB_BASE_URL: ${{ github.event.inputs.base_url }}
 
+      - name: Generate Markdown summary
+        if: always()
+        run: |
+          node scripts/generate-summary.js test-results/results.json test-results/summary.md
+          # Render the summary on the workflow run page
+          cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VFB_BASE_URL: ${{ github.event.inputs.base_url }}
+
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 30
+
+      - name: Upload Markdown summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-summary
+          path: test-results/summary.md
           retention-days: 30

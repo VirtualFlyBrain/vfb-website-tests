@@ -63,6 +63,17 @@ This makes timeout failures easy to distinguish from real assertion failures (e.
 npm run report
 ```
 
+### Markdown summary
+
+The config also writes a machine-readable JSON report to `test-results/results.json`. The helper script `scripts/generate-summary.js` converts that into a human-readable Markdown summary that categorises failures as **timeouts** (⏱️) vs **assertion/other** (❌), and lists flaky tests separately.
+
+```bash
+# After a test run, generate test-results/summary.md
+npm run summary
+```
+
+This is wired into both GitHub Actions workflows — every run renders the summary directly on the workflow run page (via `$GITHUB_STEP_SUMMARY`) and uploads `summary.md` as an artifact. So you can see at a glance, without downloading the HTML report, whether failures are likely site-slowness issues or real regressions.
+
 ## GitHub Actions
 
 Two workflows are provided:

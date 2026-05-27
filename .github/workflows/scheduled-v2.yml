@@ -27,12 +27,29 @@ jobs:
         env:
           VFB_BASE_URL: https://v2.virtualflybrain.org/
 
+      - name: Generate Markdown summary
+        if: always()
+        run: |
+          node scripts/generate-summary.js test-results/results.json test-results/summary.md
+          # Render the summary on the workflow run page
+          cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY"
+        env:
+          VFB_BASE_URL: https://v2.virtualflybrain.org/
+
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report-v2
           path: playwright-report/
+          retention-days: 30
+
+      - name: Upload Markdown summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-summary-v2
+          path: test-results/summary.md
           retention-days: 30
 
       - name: Deploy report to GitHub Pages
