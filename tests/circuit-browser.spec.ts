@@ -68,7 +68,7 @@ async function runMBON21toLHCENT3Query(page: Page, testInfo?: import('@playwrigh
  * The force-graph-container is not a React element itself, but its parent div has
  * a React fiber that leads to the ForceGraph2D component with the graph data.
  */
-async function getGraphData(page: Page) {
+async function readGraphDataOnce(page: Page) {
   return await page.evaluate(() => {
     const container = document.querySelector('.force-graph-container');
     if (!container) return null;
@@ -104,6 +104,26 @@ async function getGraphData(page: Page) {
 
     return null;
   });
+}
+
+/**
+ * Poll until the force-graph React component has populated nodes/links, then return
+ * the graph data. The graph can take several seconds to populate after the Neo4j
+ * response arrives, especially on the live site under load.
+ */
+async function getGraphData(page: Page, testInfo?: import('@playwright/test').TestInfo) {
+  let data: Awaited<ReturnType<typeof readGraphDataOnce>> = null;
+  await withTimeoutLabel(
+    'circuit graph data to populate',
+    () =>
+      expect(async () => {
+        data = await readGraphDataOnce(page);
+        expect(data).not.toBeNull();
+        expect(data!.nodes.length).toBeGreaterThan(0);
+      }).toPass({ timeout: LONG_OP_TIMEOUT, intervals: [500, 1000, 2000, 5000] }),
+    testInfo,
+  );
+  return data;
 }
 
 /** Type a neuron name into a Circuit Browser input and select from autocomplete. */
@@ -316,8 +336,8 @@ test.describe('VFB Circuit Browser — Graph visualisation (MBON21 → LHCENT3_R
     await runMBON21toLHCENT3Query(page, testInfo);
   });
 
-  test('edge data includes synapse weight', async ({ page }) => {
-    const data = await getGraphData(page);
+  test('edge data includes synapse weight', async ({ page }, testInfo) => {
+    const data = await getGraphData(page, testInfo);
     expect(data).not.toBeNull();
     expect(data!.links.length).toBeGreaterThan(0);
 
@@ -327,8 +347,8 @@ test.describe('VFB Circuit Browser — Graph visualisation (MBON21 → LHCENT3_R
     expect(link.weight).toContain(71);
   });
 
-  test('graph nodes have short names (classLabel) and long names', async ({ page }) => {
-    const data = await getGraphData(page);
+  test('graph nodes have short names (classLabel) and long names', async ({ page }, testInfo) => {
+    const data = await getGraphData(page, testInfo);
     expect(data).not.toBeNull();
     expect(data!.nodes.length).toBe(2);
 

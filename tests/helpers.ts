@@ -84,12 +84,40 @@ export async function searchAndSelect(
     testInfo,
   );
   await page.locator('li.searchResult').first().click();
+
+  // Race the Term Info update against the geppetto error dialog. If the live site
+  // fails to load the entity, it shows "Houston, we have a problem" — surface that
+  // as a clear, distinct error rather than a generic Term Info timeout.
+  const nameContent = page
+    .locator('.Collapsible', { hasText: 'Name' })
+    .locator('.Collapsible__contentInner')
+    .first();
+  const houstonDialog = page.locator('text=Houston, we have a problem');
+
   await withTimeoutLabel(
     `Term Info to update with "${expectNameContains}"`,
-    () =>
-      expect(
-        page.locator('.Collapsible', { hasText: 'Name' }).locator('.Collapsible__contentInner').first(),
-      ).toContainText(expectNameContains, { timeout: 30_000 * SLOW_FACTOR }),
+    async () => {
+      const timeout = 30_000 * SLOW_FACTOR;
+      const result = await Promise.race([
+        nameContent
+          .filter({ hasText: expectNameContains })
+          .waitFor({ state: 'visible', timeout })
+          .then(() => 'loaded' as const),
+        houstonDialog
+          .waitFor({ state: 'visible', timeout })
+          .then(() => 'site-error' as const),
+      ]);
+      if (result === 'site-error') {
+        const detail = await page
+          .locator('text=I broke geppetto')
+          .textContent()
+          .catch(() => '');
+        throw new Error(
+          `Site failed to load entity (geppetto error: "${detail || 'Houston, we have a problem'}"). ` +
+            `This usually indicates a live-site regression, not a test bug.`,
+        );
+      }
+    },
     testInfo,
   );
 }
