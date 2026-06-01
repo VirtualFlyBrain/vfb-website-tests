@@ -42,7 +42,9 @@ jobs:
         with:
           name: playwright-report-v2
           path: playwright-report/
-          retention-days: 30
+          # Heavy artifact (HTML + screenshots) — keep for 14 days only.
+          # The latest report is always available at github.io/<repo>/v2/ too.
+          retention-days: 14
 
       - name: Upload Markdown summary
         uses: actions/upload-artifact@v4

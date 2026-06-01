@@ -36,7 +36,10 @@ export default defineConfig({
   ],
   use: {
     baseURL,
-    trace: 'on-first-retry',
+    // Traces are large (50-100 MB per retry) and eat the GitHub artifact quota.
+    // Screenshots on failure + the page snapshot in error-context.md are usually
+    // enough for triage; flip back to 'on-first-retry' for deeper local debugging.
+    trace: process.env.CI ? 'off' : 'on-first-retry',
     screenshot: 'only-on-failure',
     navigationTimeout,
     actionTimeout,

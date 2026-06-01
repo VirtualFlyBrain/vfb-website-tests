@@ -1,0 +1,77 @@
+name: Cleanup old artifacts
+
+on:
+  schedule:
+    # Run weekly on Sunday at 03:00 UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      max_age_days:
+        description: 'Delete artifacts older than this many days'
+        required: false
+        default: '14'
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Delete old artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          MAX_AGE_DAYS: ${{ github.event.inputs.max_age_days || '14' }}
+        run: |
+          set -euo pipefail
+          cutoff=$(date -u -d "${MAX_AGE_DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ)
+          echo "Deleting artifacts older than ${MAX_AGE_DAYS} days (before ${cutoff})"
+
+          # List all artifacts and find old ones
+          gh api --paginate "repos/${REPO}/actions/artifacts?per_page=100" \
+            --jq ".artifacts[] | select(.created_at < \"${cutoff}\") | [.id, .name, .created_at, .size_in_bytes] | @tsv" \
+            > /tmp/old-artifacts.tsv || true
+
+          if [[ ! -s /tmp/old-artifacts.tsv ]]; then
+            echo "No artifacts older than ${MAX_AGE_DAYS} days. Nothing to delete."
+            exit 0
+          fi
+
+          total=$(wc -l < /tmp/old-artifacts.tsv)
+          total_bytes=$(awk '{sum+=$4} END {print sum}' /tmp/old-artifacts.tsv)
+          total_mb=$((total_bytes / 1024 / 1024))
+          echo "Found ${total} artifacts (~${total_mb} MB) to delete."
+
+          # Emit a summary table
+          {
+            echo "# Artifact cleanup"
+            echo ""
+            echo "Deleting ${total} artifacts older than ${MAX_AGE_DAYS} days (~${total_mb} MB total)."
+            echo ""
+            echo "| Name | Created | Size (MB) |"
+            echo "|------|---------|-----------|"
+            awk -F'\t' '{
+              size_mb = int($4 / 1024 / 1024)
+              printf("| %s | %s | %d |\n", $2, $3, size_mb)
+            }' /tmp/old-artifacts.tsv
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Delete each artifact
+          deleted=0
+          failed=0
+          while IFS=$'\t' read -r id name created size; do
+            if gh api -X DELETE "repos/${REPO}/actions/artifacts/${id}" 2>/dev/null; then
+              deleted=$((deleted + 1))
+              echo "  ✓ deleted ${name} (id=${id}, ${created})"
+            else
+              failed=$((failed + 1))
+              echo "  ✗ failed to delete ${name} (id=${id})"
+            fi
+          done < /tmp/old-artifacts.tsv
+
+          echo ""
+          echo "Deleted ${deleted} artifacts, ${failed} failures."
+          {
+            echo ""
+            echo "Deleted ${deleted} artifacts, ${failed} failures."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -80,6 +80,18 @@ Two workflows are provided:
 
 - **Scheduled tests (v2 production)** — runs daily at 06:00 UTC against `v2.virtualflybrain.org`. The HTML report is published to GitHub Pages and uploaded as a workflow artifact.
 - **Manual tests (any server)** — trigger manually via the Actions tab, specifying any base URL (defaults to `v2-dev.virtualflybrain.org`).
+- **Cleanup old artifacts** — runs weekly on Sunday at 03:00 UTC, deleting Actions artifacts older than 14 days. Also triggerable manually with a custom max-age, and writes a summary table of what was deleted to the run page.
+
+### Artifact storage
+
+To stay within GitHub's artifact storage quota:
+
+- **HTML reports** have a 14-day retention (down from the default 30)
+- **Markdown summaries** keep the 30-day default (they're tiny)
+- **Playwright traces** are disabled in CI (`trace: 'off'`) — they can be 50–100 MB per retry. Screenshots on failure plus the page snapshot in `error-context.md` are usually enough for triage. Set `trace: 'on-first-retry'` locally if you need richer debugging info.
+- The weekly **Cleanup old artifacts** workflow is a safety net that removes anything that slips through the retention policy.
+
+The most recent v2 production report is always available at `https://virtualflybrain.github.io/vfb-website-tests/v2/` regardless of artifact retention.
 
 ## Adding more browsers
 
