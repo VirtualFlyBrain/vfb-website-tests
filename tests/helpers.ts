@@ -151,6 +151,8 @@ export async function clickQueryAndExpectResults(page: Page, linkText: string, t
   // Different query types produce different result formats:
   // - "N results" text (similarity/connectivity queries processed in-app)
   // - A results table with domain-specific headers (image lists, transcriptomics, etc.)
+  //   Image/painted-anatomy lists use Template_Space / Gross_Type columns rather
+  //   than a "N results" caption, so match those headers explicitly.
   await withTimeoutLabel(
     `query results for "${linkText}"`,
     () =>
@@ -158,8 +160,11 @@ export async function clickQueryAndExpectResults(page: Page, linkText: string, t
         page
           .locator('text=/\\d+ results/')
           .or(page.locator('th:has-text("Imaging_Technique")'))
+          .or(page.locator('th:has-text("Template_Space")'))
+          .or(page.locator('th:has-text("Gross_Type")'))
           .or(page.locator('th:has-text("Score")'))
-          .or(page.locator('th:has-text("Cell type")')),
+          .or(page.locator('th:has-text("Cell type")'))
+          .first(),
       ).toBeVisible({ timeout: LONG_OP_TIMEOUT }),
     testInfo,
   );

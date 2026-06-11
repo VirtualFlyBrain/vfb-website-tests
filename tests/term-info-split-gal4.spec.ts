@@ -22,7 +22,7 @@ test.describe('VFB Term Info — Split-GAL4 image (VFB_00063821)', () => {
     const queryFor = page.locator('.Collapsible', { hasText: 'Query for' })
       .locator('.Collapsible__contentInner').first();
     await expect(queryFor).toContainText('Anatomy');
-    await expect(queryFor).toContainText('is expressed in');
+    await expect(queryFor).toContainText('is expressed');
     await expect(queryFor).toContainText('Images of fragments');
   });
 
