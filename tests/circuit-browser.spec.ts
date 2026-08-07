@@ -352,18 +352,23 @@ test.describe('VFB Circuit Browser — Graph visualisation (MBON21 → LHCENT3_R
     expect(data).not.toBeNull();
     expect(data!.nodes.length).toBe(2);
 
-    // Each node should have classLabel (short name), name (long name), and title (VFB ID)
-    const mbon21 = data!.nodes.find(n => n.classLabel === 'MBON21');
+    // Identify each node by its stable VFB id (title), then assert the displayed
+    // short label (classLabel) is exactly the neuron's short name.
+    //
+    // NOTE: the MBON21 node currently regresses to its broad class label
+    // "adult cholinergic neuron" instead of "MBON21", so this assertion is
+    // expected to FAIL until the graph short label is fixed on the site.
+    const mbon21 = data!.nodes.find(n => n.title === 'VFB_jrchk0f9');
     expect(mbon21).toBeDefined();
     expect(mbon21!.name).toContain('MBON21(y4y5)(PVL06)_L');
     expect(mbon21!.name).toContain('FlyEM-HB:985813153');
-    expect(mbon21!.title).toBe('VFB_jrchk0f9');
+    expect(mbon21!.classLabel).toBe('MBON21');
 
-    const lhcent3 = data!.nodes.find(n => n.classLabel === 'LHCENT3');
+    const lhcent3 = data!.nodes.find(n => n.title === 'VFB_jrchjz4t');
     expect(lhcent3).toBeDefined();
     expect(lhcent3!.name).toContain('LHCENT3_R');
     expect(lhcent3!.name).toContain('FlyEM-HB:487144598');
-    expect(lhcent3!.title).toBe('VFB_jrchjz4t');
+    expect(lhcent3!.classLabel).toBe('LHCENT3');
   });
 
 });

@@ -155,8 +155,8 @@ test.describe('VFB Term Info Links — neuron queries and cross references (VFB_
     await clickQueryAndExpectResults(page, 'Neurons with similar morphology');
   });
 
-  test('"Show neurons connected to" query returns results', async ({ page }) => {
-    await clickQueryAndExpectResults(page, 'Show neurons connected to');
+  test('"Neurons connected to" query returns results', async ({ page }) => {
+    await clickQueryAndExpectResults(page, 'Neurons connected to');
   });
 });
 
@@ -171,7 +171,7 @@ test.describe('VFB Term Info Links — neuron class queries (FBbt_00100163)', ()
     await searchAndSelect(page, 'FBbt_00100163', 'FBbt_00100163');
   });
 
-  test('"Single cell transcriptomics" query returns results', async ({ page }) => {
-    await clickQueryAndExpectResults(page, 'Single cell transcriptomics');
+  test('"scRNAseq data for" query returns results', async ({ page }) => {
+    await clickQueryAndExpectResults(page, 'scRNAseq data for');
   });
 });

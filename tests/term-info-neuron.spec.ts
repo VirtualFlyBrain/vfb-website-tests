@@ -23,6 +23,11 @@ test.describe('VFB Term Info — individual neuron (VFB_jrchk7yg)', () => {
   });
 
   test('shows thumbnail with navigation', async ({ page }) => {
+    // This neuron has TWO images (aligned to JRC2018Unisex VFB_00101567 and
+    // JRC_FlyEM_Hemibrain VFB_00101384) — VFBquery emits both — so the Thumbnail
+    // should render a carousel with Previous/Next. The live site currently shows
+    // only one image with no navigation, so this assertion is expected to FAIL
+    // until the multi-image thumbnail carousel is restored on the site.
     const thumbnail = page.locator('.Collapsible', { hasText: 'Thumbnail' })
       .locator('.Collapsible__contentInner');
     await expect(thumbnail).toBeVisible();
@@ -77,7 +82,8 @@ test.describe('VFB Term Info — individual neuron (VFB_jrchk7yg)', () => {
   });
 
   test('shows alignment template', async ({ page }) => {
-    await expectSection(page, 'Aligned to', 'JRC2018Unisex');
+    // "Aligned to" now lists templates by short name (e.g. "JRC2018U, JRCFIB2018Fum").
+    await expectSection(page, 'Aligned to', 'JRC2018U');
   });
 
   test('shows license', async ({ page }) => {

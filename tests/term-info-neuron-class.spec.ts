@@ -32,12 +32,12 @@ test.describe('VFB Term Info — neuron class (FBbt_00100163)', () => {
   test('shows query options for neuron class', async ({ page }) => {
     const queryFor = page.locator('.Collapsible', { hasText: 'Query for' })
       .locator('.Collapsible__contentInner').first();
-    await expect(queryFor).toContainText('transgene expression');
+    await expect(queryFor).toContainText('Transgene expression');
     await expect(queryFor).toContainText('Subclasses');
     await expect(queryFor).toContainText('available images');
-    await expect(queryFor).toContainText('transcriptomics');
-    await expect(queryFor).toContainText('downstream connectivity');
-    await expect(queryFor).toContainText('upstream connectivity');
+    await expect(queryFor).toContainText('scRNAseq');
+    await expect(queryFor).toContainText('Downstream connectivity');
+    await expect(queryFor).toContainText('Upstream connectivity');
   });
 
   test('shows graphs section', async ({ page }) => {

@@ -18,6 +18,14 @@ test.describe('VFB Term Info — Split-GAL4 image (VFB_00063821)', () => {
     await expectSection(page, 'Classification', 'expression pattern');
   });
 
+  // VFB_00063821 is an *Individual* expression-pattern image (SuperTypes include
+  // Individual, Expression_pattern, Split). VFBquery's instance-inheritance block
+  // (vfb_queries.py ~L1376-1451) propagates its parent expression-pattern class's
+  // queries onto it — running vfbquery.get_term_info('VFB_00063821') on the current
+  // library yields 7 inherited queries, incl. AnatomyExpressedIn ("Anatomy where …
+  // is expressed") and epFrag ("Images of fragments of …"). If this test fails on
+  // the live site, the deployed VFBquery/cached term_info predates that inheritance
+  // and is dropping the queries — a real regression, not a test bug.
   test('shows anatomy and image query options', async ({ page }) => {
     const queryFor = page.locator('.Collapsible', { hasText: 'Query for' })
       .locator('.Collapsible__contentInner').first();
@@ -42,6 +50,7 @@ test.describe('VFB Term Info — Split-GAL4 image (VFB_00063821)', () => {
   });
 
   test('shows alignment template', async ({ page }) => {
-    await expectSection(page, 'Aligned to', 'JRC2018Unisex');
+    // "Aligned to" now lists templates by short name (e.g. "JRC2018U, JFRC2").
+    await expectSection(page, 'Aligned to', 'JRC2018U');
   });
 });
