@@ -63,12 +63,17 @@ export async function dismissQuickHelp(page: Page) {
   }
 }
 
-/** Open search, type a query, click the first result, and wait for Term Info to update. */
+/**
+ * Open search, type a query, click a result, and wait for Term Info to update.
+ * Clicks the first result unless `resultText` is given, in which case it clicks the
+ * first result containing that text (use when other terms may outrank the target).
+ */
 export async function searchAndSelect(
   page: Page,
   query: string,
   expectNameContains: string,
   testInfo?: TestInfo,
+  resultText?: string,
 ) {
   await page.locator('i.fa-search.arrowsStyle').first().click();
   const searchInput = page.locator('input#searchInput');
@@ -78,12 +83,16 @@ export async function searchAndSelect(
     testInfo,
   );
   await searchInput.fill(query);
+  const result = (resultText
+    ? page.locator('li.searchResult', { hasText: resultText })
+    : page.locator('li.searchResult')
+  ).first();
   await withTimeoutLabel(
-    `search results for "${query}"`,
-    () => expect(page.locator('li.searchResult').first()).toBeVisible({ timeout: 15_000 * SLOW_FACTOR }),
+    resultText ? `search result "${resultText}" for "${query}"` : `search results for "${query}"`,
+    () => expect(result).toBeVisible({ timeout: 15_000 * SLOW_FACTOR }),
     testInfo,
   );
-  await page.locator('li.searchResult').first().click();
+  await result.click();
 
   // Race the Term Info update against the geppetto error dialog. If the live site
   // fails to load the entity, it shows "Houston, we have a problem" — surface that

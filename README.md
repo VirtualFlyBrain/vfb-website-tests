@@ -221,14 +221,13 @@ Tests the Term Info panel content for six different VFB entity types. Each entit
 | shows downloads | "OBJ" |
 | shows alignment template | "JRC2018Unisex" |
 
-#### `term-info-dataset.spec.ts` — dataset (Berg2025 / Male CNS connectome) (7 tests)
+#### `term-info-dataset.spec.ts` — dataset (Berg2025 / Male CNS connectome) (6 tests)
 
 | Test | Description |
 |------|-------------|
-| shows symbol | "male-cns" |
 | shows name with dataset description and semantic tags | "Male CNS", "Berg2025"; `DataSet` tag |
 | shows available images with navigation | Available Images visible with Next button |
-| shows query to list images | "List all images" |
+| shows query to list images | "Images in dataset" |
 | shows description | "male-cns" and "Berg" |
 | shows references with DOI link and pub tag | "Berg", "2025"; DOI link to `doi.org`; `gpt-doi` icon; `pub` tag badge |
 | shows license | "CC-BY" |

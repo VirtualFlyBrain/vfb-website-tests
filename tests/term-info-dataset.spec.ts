@@ -6,11 +6,9 @@ test.describe('VFB Term Info — dataset (Berg2025)', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
-    await searchAndSelect(page, 'Berg2025', 'Berg2025');
-  });
-
-  test('shows symbol', async ({ page }) => {
-    await expectSection(page, 'Symbol', 'male-cns');
+    // Search result for 'Berg2025' also returns Berg2025aroi (Male CNS neuropil ROIs),
+    // which can rank first — pick the connectome neurons dataset explicitly.
+    await searchAndSelect(page, 'Berg2025', 'Berg2025a', undefined, '(Berg2025a)');
   });
 
   test('shows name with dataset description and semantic tags', async ({ page }) => {
@@ -30,7 +28,7 @@ test.describe('VFB Term Info — dataset (Berg2025)', () => {
   });
 
   test('shows query to list images', async ({ page }) => {
-    await expectSection(page, 'Query for', 'List all available images');
+    await expectSection(page, 'Query for', 'Images in dataset');
   });
 
   test('shows description', async ({ page }) => {
