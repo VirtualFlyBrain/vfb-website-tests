@@ -56,7 +56,9 @@ test.describe('VFB Term Info Links — references (Berg2025)', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
-    await searchAndSelect(page, 'Berg2025', 'Berg2025');
+    // Search result for 'Berg2025' also returns Berg2025aroi (Male CNS neuropil ROIs),
+    // which can rank first — pick the connectome neurons dataset explicitly.
+    await searchAndSelect(page, 'Berg2025', 'Berg2025a', undefined, '(Berg2025a)');
   });
 
   test('clicking a publication citation navigates to the pub record', async ({ page }) => {
