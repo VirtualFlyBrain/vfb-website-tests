@@ -27,6 +27,12 @@ jobs:
         env:
           VFB_BASE_URL: https://v2.virtualflybrain.org/
 
+      - name: Flag site outage
+        if: always() && hashFiles('test-results/site-outage.json') != ''
+        run: |
+          msg=$(jq -r '"Site went down at \(.since) (detected after \(.detectedAfter)), so the rest of the run was skipped. Re-run this workflow once the site is back up. \(.problems | join("; "))"' test-results/site-outage.json)
+          echo "::error title=Site outage - tests skipped::${msg}"
+
       - name: Generate Markdown summary
         if: always()
         run: |

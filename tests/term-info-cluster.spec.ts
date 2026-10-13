@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test } from './fixtures';
 import { dismissQuickHelp, searchAndSelect, expectSection, expectNameTags } from './helpers';
 
 test.describe('VFB Term Info — scRNAseq cluster (FBlc0006494)', () => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { dismissQuickHelp, searchAndSelect, expectSection, expectNameTags } from './helpers';
 
 test.describe('VFB Term Info — neuron class (FBbt_00100163)', () => {

@@ -1,4 +1,4 @@
-import { test, expect, Page, TestInfo } from '@playwright/test';
+import { test, expect, Page, TestInfo } from './fixtures';
 import {
   dismissQuickHelp,
   searchAndSelect,

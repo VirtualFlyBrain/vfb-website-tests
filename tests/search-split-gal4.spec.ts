@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 /** Open the search panel and optionally type a query. */
 async function openSearchAndQuery(page: Page, query?: string) {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { dismissQuickHelp, LONG_TEST_TIMEOUT, VERY_LONG_OP_TIMEOUT, withTimeoutLabel } from './helpers';
 
 // The ROI tree takes a long time to load (~50s on production, longer on v2-dev)

@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 import { LONG_TEST_TIMEOUT, LONG_OP_TIMEOUT, SLOW_FACTOR, withTimeoutLabel } from './helpers';
 
 // Circuit browser tests interact with a Neo4j backend that can be slow;
