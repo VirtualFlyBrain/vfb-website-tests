@@ -55,13 +55,23 @@ for (const suite of results.suites || []) {
   allSpecs.push(...collectSpecs(suite));
 }
 
-const failed = allSpecs.filter(s => s.outcome === 'unexpected');
-const flaky = allSpecs.filter(s => s.outcome === 'flaky');
-const passed = allSpecs.filter(s => s.outcome === 'expected');
-const skipped = allSpecs.filter(s => s.outcome === 'skipped');
+// Tests whose final attempt was skipped by the outage guard (see tests/site-health.ts) never
+// passed. Playwright reports a failure followed by a skipped retry as "flaky", so pull these
+// out before bucketing by outcome.
+const isOutageSkipped = s => s.status === 'skipped' && s.annotations.some(a => a.type === 'outage');
+const outageSkipped = allSpecs.filter(isOutageSkipped);
+const counted = allSpecs.filter(s => !isOutageSkipped(s));
 
-// Identify timeout failures
+const failed = counted.filter(s => s.outcome === 'unexpected');
+const flaky = counted.filter(s => s.outcome === 'flaky');
+const passed = counted.filter(s => s.outcome === 'expected');
+const skipped = [...counted.filter(s => s.outcome === 'skipped'), ...outageSkipped];
+
+// Identify outage and timeout failures
 function categorize(spec) {
+  // Annotation set by the outage guard in tests/site-health.ts
+  if (spec.annotations.some(a => a.type === 'outage')) return 'outage';
+  if ((spec.errors[0]?.message || '').toString().includes('[OUTAGE]')) return 'outage';
   // Annotation set by our withTimeoutLabel helper
   if (spec.annotations.some(a => a.type === 'timeout')) return 'timeout';
   const msg = (spec.errors[0]?.message || '').toString();
@@ -72,6 +82,8 @@ function categorize(spec) {
   return 'assertion';
 }
 
+const failedOutages = failed.filter(s => categorize(s) === 'outage');
+const preRunOutage = failedOutages.some(s => s.file.endsWith('site-health.setup.ts'));
 const failedTimeouts = failed.filter(s => categorize(s) === 'timeout');
 const failedAssertions = failed.filter(s => categorize(s) === 'assertion');
 
@@ -81,9 +93,16 @@ function stripAnsi(s) {
   return s.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
+const CATEGORY_LABELS = {
+  outage: { icon: '🔌', type: 'Site outage' },
+  timeout: { icon: '⏱️', type: 'Timeout' },
+  assertion: { icon: '❌', type: 'Assertion / other' },
+};
+
 function formatSpec(spec) {
   const fullTitle = [...spec.suiteTitles.slice(1), spec.title].filter(Boolean).join(' › ');
   const cat = categorize(spec);
+  const label = CATEGORY_LABELS[cat];
   const annoDescs = spec.annotations
     .filter(a => a.type === 'timeout')
     .map(a => a.description)
@@ -91,9 +110,9 @@ function formatSpec(spec) {
   const error = stripAnsi(spec.errors[0]?.message || '').trim();
   const duration = (spec.duration / 1000).toFixed(1);
 
-  let block = `### ${cat === 'timeout' ? '⏱️' : '❌'} ${fullTitle}\n\n`;
+  let block = `### ${label.icon} ${fullTitle}\n\n`;
   block += `- **File**: \`${spec.file}\`\n`;
-  block += `- **Type**: ${cat === 'timeout' ? 'Timeout' : 'Assertion / other'}\n`;
+  block += `- **Type**: ${label.type}\n`;
   block += `- **Duration**: ${duration}s`;
   if (spec.attempts > 1) block += ` (${spec.attempts} attempts)`;
   block += `\n`;
@@ -116,16 +135,45 @@ const wallMin = (wallMs / 60000).toFixed(1);
 let md = '';
 md += `# VFB test summary\n\n`;
 md += `**Target**: \`${baseURL}\`  \n`;
-md += `**Result**: ${failed.length === 0 ? '✅ All tests passed' : `❌ ${failed.length} failed`}  \n`;
+if (failed.length > 0) md += `**Result**: ❌ ${failed.length} failed  \n`;
+else if (outageSkipped.length > 0) md += `**Result**: ⚠️ Incomplete — ${outageSkipped.length} skipped due to site outage  \n`;
+else md += `**Result**: ✅ All tests passed  \n`;
 md += `**Totals**: ${totals}  \n`;
 md += `**Wall time**: ${wallMin} min\n\n`;
+
+if (failedOutages.length > 0 || outageSkipped.length > 0) {
+  md += `> [!WARNING]\n`;
+  if (preRunOutage) {
+    md += `> **Site outage detected before the run** — \`${baseURL}\` was down or unable to search, so the test suite was skipped. `;
+  } else {
+    md += `> **Site outage detected during the run** — \`${baseURL}\` was down or unable to search, so ${outageSkipped.length} test(s) were skipped and not re-run. `;
+  }
+  md += `This reflects the live site's availability, not test regressions. See the 🔌 sections below for what the health check found.\n\n`;
+}
 
 if (failed.length > 0) {
   md += `## Failures by category\n\n`;
   md += `| Category | Count |\n|----------|-------|\n`;
+  if (failedOutages.length > 0) md += `| 🔌 Site outage | ${failedOutages.length} |\n`;
   md += `| ⏱️ Timeouts | ${failedTimeouts.length} |\n`;
   md += `| ❌ Assertions / other | ${failedAssertions.length} |\n\n`;
   md += `> ⏱️ Timeouts often indicate the live site was slow rather than a real regression. Look at assertion failures first.\n\n`;
+}
+
+if (failedOutages.length > 0) {
+  md += `## 🔌 Site outage failures (${failedOutages.length})\n\n`;
+  for (const spec of failedOutages) md += formatSpec(spec) + '\n';
+}
+
+if (outageSkipped.length > 0) {
+  md += `## 🔌 Skipped due to site outage (${outageSkipped.length})\n\n`;
+  const reason = outageSkipped[0].annotations.find(a => a.type === 'outage')?.description;
+  if (reason) md += `Health check: ${reason}\n\n`;
+  for (const spec of outageSkipped) {
+    const fullTitle = [...spec.suiteTitles.slice(1), spec.title].filter(Boolean).join(' › ');
+    md += `- \`${spec.file}\` › ${fullTitle}\n`;
+  }
+  md += '\n';
 }
 
 if (failedTimeouts.length > 0) {
@@ -147,7 +195,7 @@ if (flaky.length > 0) {
   md += '\n';
 }
 
-if (failed.length === 0 && flaky.length === 0) {
+if (failed.length === 0 && flaky.length === 0 && outageSkipped.length === 0) {
   md += `All ${passed.length} tests passed cleanly.\n`;
 }
 
@@ -156,5 +204,7 @@ fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, md);
 console.log(`Wrote summary to ${outputPath}`);
 console.log(`  ${totals}`);
+if (failedOutages.length > 0) console.log(`  🔌 ${failedOutages.length} site outage failures`);
+if (outageSkipped.length > 0) console.log(`  🔌 ${outageSkipped.length} skipped due to site outage`);
 if (failedTimeouts.length > 0) console.log(`  ⏱️  ${failedTimeouts.length} timeout failures`);
 if (failedAssertions.length > 0) console.log(`  ❌ ${failedAssertions.length} assertion failures`);

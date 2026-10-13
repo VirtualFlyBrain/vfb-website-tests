@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { dismissQuickHelp, searchAndSelect, clickQueryAndExpectResults, LONG_TEST_TIMEOUT } from './helpers';
 
 // ── Classification link navigates to parent class ───────────────────────────

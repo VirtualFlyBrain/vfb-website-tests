@@ -63,6 +63,19 @@ This makes timeout failures easy to distinguish from real assertion failures (e.
 npm run report
 ```
 
+### Site outage detection
+
+If the live site (or its search backend) is down, every test would otherwise wait out its full timeout and retries — a single outage once turned a ~1 hour run into 4 hours of 106 failures. To avoid that:
+
+- **Before the run**, the `site-health` setup project (`tests/site-health.setup.ts`) loads the site and runs a search for "DNp01". If that doesn't succeed within 10 minutes (override with `VFB_HEALTH_WAIT_MIN`), it fails with an `[OUTAGE]` error and the rest of the suite is skipped.
+- **During the run**, an auto fixture (`tests/fixtures.ts`) runs the same health check after any failed test, and re-checks 30s later to confirm. If the site is down, the outage is recorded in `test-results/site-outage.json` and **every remaining test (and retry) is skipped**. The site is not re-checked, so re-run the workflow once it's back up.
+- If an outage was recorded (before or during the run), a global teardown (`tests/outage-teardown.ts`) fails the run, so an incomplete run can't pass silently. The CI workflows also add a "Site outage - tests skipped" error annotation to the run page.
+- **Notification:** because the run fails, GitHub sends its standard failed-workflow email. For scheduled runs this goes to whoever last edited the `cron` line in `scheduled-v2.yml`, provided they have Actions email notifications enabled (GitHub Settings → Notifications → Actions).
+- Health check errors list any failing `virtualflybrain.org` requests (e.g. Solr search or term info API) to help pinpoint which service is down.
+- The Markdown summary lists tests skipped due to an outage under 🔌, with a warning banner at the top.
+
+Specs must import `test` from `./fixtures` (not `@playwright/test`) to get the outage guard. When running locally, pass `--no-deps` to skip the pre-run check.
+
 ### Markdown summary
 
 The config also writes a machine-readable JSON report to `test-results/results.json`. The helper script `scripts/generate-summary.js` converts that into a human-readable Markdown summary that categorises failures as **timeouts** (⏱️) vs **assertion/other** (❌), and lists flaky tests separately.
@@ -106,6 +119,10 @@ npx playwright install firefox webkit
 ```
 tests/
   helpers.ts                       # Shared test utilities
+  fixtures.ts                      # `test` with the site outage guard (import this in specs)
+  site-health.ts                   # Site health check + outage tracking
+  site-health.setup.ts             # Pre-run health check (setup project)
+  outage-teardown.ts               # Fails the run if tests were skipped due to an outage
   search-neuron-class.spec.ts      # Search tests: DNp01 (neuron class)
   search-split-gal4.spec.ts        # Search tests: MB099C (split-GAL4 driver)
   search-scrnaseq.spec.ts          # Search tests: AFCA (scRNAseq data)

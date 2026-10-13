@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 
 const VFB_ID = 'VFB_jrchk7yg';
 const NEURON_NAME = 'WEDPN2A_R (FlyEM-HB:885788485)';

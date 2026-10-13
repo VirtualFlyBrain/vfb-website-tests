@@ -24,6 +24,8 @@ const actionTimeout = 60_000 * slowFactor;    // 60s  prod / 180s dev
 
 export default defineConfig({
   testDir: './tests',
+  /* Fails the run if a site outage caused tests to be skipped (see tests/site-health.ts) */
+  globalTeardown: './tests/outage-teardown.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -45,9 +47,18 @@ export default defineConfig({
     actionTimeout,
   },
   projects: [
+    /* Pre-run site health check; if the site is down the rest of the suite is skipped.
+       Use --no-deps to skip it when running tests locally. */
+    {
+      name: 'site-health',
+      testMatch: /site-health\.setup\.ts/,
+      retries: 0,
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['site-health'],
     },
     // Uncomment to add more browsers:
     // {
