@@ -28,9 +28,13 @@ async function retriggerSearch(searchInput: Page['locator'] extends (...args: in
   await page.waitForTimeout(3000);
 }
 
-const QUERY = 'AFCA D50 female';
+// AFCA (Lu 2023). Cluster labels contain "Aging Fly Cell Atlas"; the dataset is
+// labelled "scRNAseq data from Lu (2023)". "Lu (2023)" matches both (plus genes).
+const CLUSTER_QUERY = 'Aging Fly Cell Atlas';
+const DATASET_QUERY = 'scRNAseq data from Lu';
+const MIXED_QUERY = 'Lu (2023)';
 
-test.describe('VFB Search — scRNAseq data (AFCA)', () => {
+test.describe('VFB Search — scRNAseq data (AFCA, Lu 2023)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -41,25 +45,25 @@ test.describe('VFB Search — scRNAseq data (AFCA)', () => {
     }
   });
 
-  test('search for AFCA D50 female returns results', async ({ page }) => {
-    await openSearchAndQuery(page, QUERY);
+  test('search for Aging Fly Cell Atlas returns cluster results', async ({ page }) => {
+    await openSearchAndQuery(page, CLUSTER_QUERY);
 
     const results = page.locator('li.searchResult');
     const count = await results.count();
     expect(count).toBeGreaterThan(0);
 
-    await expect(results.first()).toContainText('AFCA');
+    await expect(results.first()).toContainText('Aging Fly Cell Atlas');
   });
 
-  test('AFCA results include DataSet-tagged entries', async ({ page }) => {
-    await openSearchAndQuery(page, QUERY);
+  test('AFCA dataset search returns DataSet-tagged entry', async ({ page }) => {
+    await openSearchAndQuery(page, DATASET_QUERY);
 
     const datasetResults = page.locator('li.searchResult:has(span.label-DataSet)');
     expect(await datasetResults.count()).toBeGreaterThan(0);
   });
 
   test('some AFCA Cluster results carry Nervous_system tag', async ({ page }) => {
-    await openSearchAndQuery(page, QUERY);
+    await openSearchAndQuery(page, CLUSTER_QUERY);
 
     const nsClusterResults = page.locator(
       'li.searchResult:has(span.label-Cluster):has(span.label-Nervous_system)'
@@ -68,7 +72,7 @@ test.describe('VFB Search — scRNAseq data (AFCA)', () => {
   });
 });
 
-test.describe('VFB Search Filters — scRNAseq data (AFCA)', () => {
+test.describe('VFB Search Filters — scRNAseq data (AFCA, Lu 2023)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -79,43 +83,40 @@ test.describe('VFB Search Filters — scRNAseq data (AFCA)', () => {
     }
   });
 
-  test('"Has scRNAseq data" filter narrows AFCA results to datasets', async ({ page }) => {
-    const searchInput = await openSearchAndQuery(page, QUERY);
-    const unfilteredCount = await page.locator('li.searchResult').count();
-    expect(unfilteredCount).toBeGreaterThan(0);
+  test('"Has scRNAseq data" filter keeps the AFCA dataset and drops its clusters', async ({ page }) => {
+    const searchInput = await openSearchAndQuery(page, MIXED_QUERY);
+    const clusterResults = page.locator('li.searchResult:has(span.label-Cluster)');
+    expect(await clusterResults.count()).toBeGreaterThan(0);
 
     await enableFilter(page, 'Has scRNAseq data');
-    await retriggerSearch(searchInput, QUERY, page);
+    await retriggerSearch(searchInput, MIXED_QUERY, page);
     await expect(page.locator('li.searchResult').first()).toBeVisible({ timeout: 15_000 });
 
-    const filteredCount = await page.locator('li.searchResult').count();
-    expect(filteredCount).toBeGreaterThan(0);
-    expect(filteredCount).toBeLessThan(unfilteredCount);
-
-    // All results under this filter should be DataSet-tagged
-    const results = page.locator('li.searchResult');
-    for (let i = 0; i < filteredCount; i++) {
-      await expect(results.nth(i).locator('span.label-DataSet')).toBeVisible();
-    }
+    // The filter also matches genes (e.g. "Gustatory receptor LU.1"), so only
+    // check that the dataset survives and the clusters do not
+    await expect(
+      page.locator('li.searchResult:has(span.label-DataSet)', { hasText: 'scRNAseq data from Lu (2023)' })
+    ).toBeVisible();
+    expect(await clusterResults.count()).toBe(0);
   });
 
   test('Neuron filter excludes all AFCA results', async ({ page }) => {
-    await openSearchAndQuery(page, QUERY);
+    await openSearchAndQuery(page, CLUSTER_QUERY);
     const unfilteredCount = await page.locator('li.searchResult').count();
     expect(unfilteredCount).toBeGreaterThan(0);
 
-    // AFCA entries are datasets and clusters, not neurons
+    // AFCA clusters are not neurons
     await enableFilter(page, 'Neuron');
 
     const searchInput = page.locator('input#searchInput');
-    await retriggerSearch(searchInput, QUERY, page);
+    await retriggerSearch(searchInput, CLUSTER_QUERY, page);
 
     const filteredCount = await page.locator('li.searchResult').count();
     expect(filteredCount).toBe(0);
   });
 
   test('Image filter excludes all AFCA results', async ({ page }) => {
-    await openSearchAndQuery(page, QUERY);
+    await openSearchAndQuery(page, CLUSTER_QUERY);
     const unfilteredCount = await page.locator('li.searchResult').count();
     expect(unfilteredCount).toBeGreaterThan(0);
 
@@ -123,7 +124,7 @@ test.describe('VFB Search Filters — scRNAseq data (AFCA)', () => {
     await enableFilter(page, 'Image');
 
     const searchInput = page.locator('input#searchInput');
-    await retriggerSearch(searchInput, QUERY, page);
+    await retriggerSearch(searchInput, CLUSTER_QUERY, page);
 
     const filteredCount = await page.locator('li.searchResult').count();
     expect(filteredCount).toBe(0);

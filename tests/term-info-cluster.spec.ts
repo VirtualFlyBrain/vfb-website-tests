@@ -1,16 +1,16 @@
 import { test } from './fixtures';
 import { dismissQuickHelp, searchAndSelect, expectSection, expectNameTags } from './helpers';
 
-test.describe('VFB Term Info — scRNAseq cluster (FBlc0006494)', () => {
+test.describe('VFB Term Info — scRNAseq cluster (VFBseq_00001616)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await dismissQuickHelp(page);
-    await searchAndSelect(page, 'FBlc0006494', 'FBlc0006494');
+    await searchAndSelect(page, 'VFBseq_00001616', 'VFBseq_00001616');
   });
 
   test('shows name with cluster ID and semantic tags', async ({ page }) => {
-    await expectSection(page, 'Name', 'PNS_neurons', 'FBlc0006494');
+    await expectSection(page, 'Name', 'Kenyon cell cluster (Aging Fly Cell Atlas head)', 'VFBseq_00001616');
     await expectNameTags(page, 'Nervous_system', 'Cluster', 'Adult');
   });
 
@@ -19,11 +19,11 @@ test.describe('VFB Term Info — scRNAseq cluster (FBlc0006494)', () => {
   });
 
   test('shows related individuals', async ({ page }) => {
-    await expectSection(page, 'Related Individuals', 'scRNAseq_2023_AFCA');
+    await expectSection(page, 'Related Individuals', 'Aging Fly Cell Atlas head');
   });
 
   test('shows relationships with cell type composition', async ({ page }) => {
-    await expectSection(page, 'Relationships', 'PNS neuron');
+    await expectSection(page, 'Relationships', 'adult Kenyon cell');
   });
 
   test('shows query for genes', async ({ page }) => {
@@ -31,6 +31,6 @@ test.describe('VFB Term Info — scRNAseq cluster (FBlc0006494)', () => {
   });
 
   test('shows source', async ({ page }) => {
-    await expectSection(page, 'Source', 'scRNAseq_2023_AFCA');
+    await expectSection(page, 'Source', 'scRNAseq data from Lu (2023)');
   });
 });
