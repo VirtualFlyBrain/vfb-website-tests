@@ -69,3 +69,20 @@ jobs:
           destination_dir: v2
           # Keep only the latest report; otherwise gh-pages history grows by a full report every day
           force_orphan: true
+
+  keepalive:
+    # GitHub disables scheduled workflows in public repos after 60 days without
+    # repo activity. Re-enabling them via the API resets that timer.
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Re-enable scheduled workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          for wf in scheduled-v2.yml cleanup-artifacts.yml; do
+            gh api -X PUT "repos/${REPO}/actions/workflows/${wf}/enable"
+            echo "Re-enabled ${wf}"
+          done
