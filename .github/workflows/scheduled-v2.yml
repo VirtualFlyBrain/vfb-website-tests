@@ -67,3 +67,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./playwright-report
           destination_dir: v2
+          # Keep only the latest report; otherwise gh-pages history grows by a full report every day
+          force_orphan: true

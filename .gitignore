@@ -4,3 +4,4 @@ playwright-report/
 blob-report/
 .env
 .idea/
+.claude/settings.local.json
