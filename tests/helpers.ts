@@ -4,8 +4,8 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
  * Detect whether the current test run targets v2 production. Non-production servers
  * (v2-dev, v2-staging) are typically slower and need extended timeouts.
  */
-export const BASE_URL = process.env.VFB_BASE_URL ?? 'https://v2.virtualflybrain.org/';
-export const IS_PRODUCTION = BASE_URL.startsWith('https://v2.virtualflybrain.org');
+export const BASE_URL = process.env.VFB_BASE_URL ?? 'https://v3.virtualflybrain.org/';
+export const IS_PRODUCTION = /^https:\/\/v[23]\.virtualflybrain\.org/.test(BASE_URL);
 
 /** Multiplier applied to most timeouts when targeting a non-production server. */
 export const SLOW_FACTOR = IS_PRODUCTION ? 1 : 3;

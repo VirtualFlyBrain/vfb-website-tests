@@ -2,20 +2,20 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Base URL can be set via the VFB_BASE_URL environment variable.
- * Defaults to the production v2 site.
+ * Defaults to the production site (v3; v2 serves the same app).
  *
  * Examples:
  *   VFB_BASE_URL=https://v2-dev.virtualflybrain.org/ npx playwright test
- *   npx playwright test                # uses https://v2.virtualflybrain.org/
+ *   npx playwright test                # uses https://v3.virtualflybrain.org/
  */
-const baseURL = process.env.VFB_BASE_URL ?? 'https://v2.virtualflybrain.org/';
+const baseURL = process.env.VFB_BASE_URL ?? 'https://v3.virtualflybrain.org/';
 
 /**
  * v2-dev (and other non-production servers) are typically slower than the live site —
- * use longer timeouts when not testing against v2 production. Even on production
+ * use longer timeouts when not testing against production. Even on production
  * the live site can be slow, so the production baseline is generous.
  */
-const isProduction = baseURL.startsWith('https://v2.virtualflybrain.org');
+const isProduction = /^https:\/\/v[23]\.virtualflybrain\.org/.test(baseURL);
 const slowFactor = isProduction ? 1 : 3;
 const testTimeout = 120_000 * slowFactor;     // 120s prod / 360s dev
 const expectTimeout = 20_000 * slowFactor;    // 20s  prod /  60s dev

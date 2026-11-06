@@ -1,4 +1,4 @@
-name: Scheduled tests (v2 production)
+name: Scheduled tests (v3 production)
 
 on:
   schedule:
@@ -22,10 +22,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run tests against v2.virtualflybrain.org
+      - name: Run tests against v3.virtualflybrain.org
         run: npx playwright test
         env:
-          VFB_BASE_URL: https://v2.virtualflybrain.org/
+          VFB_BASE_URL: https://v3.virtualflybrain.org/
 
       - name: Flag site outage
         if: always() && hashFiles('test-results/site-outage.json') != ''
@@ -40,7 +40,7 @@ jobs:
           # Render the summary on the workflow run page
           cat test-results/summary.md >> "$GITHUB_STEP_SUMMARY"
         env:
-          VFB_BASE_URL: https://v2.virtualflybrain.org/
+          VFB_BASE_URL: https://v3.virtualflybrain.org/
 
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
