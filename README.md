@@ -1,6 +1,6 @@
 # VFB Website Tests
 
-Playwright end-to-end tests for [Virtual Fly Brain](https://v2.virtualflybrain.org/).
+Playwright end-to-end tests for [Virtual Fly Brain](https://v3.virtualflybrain.org/).
 
 ## Setup
 
@@ -12,7 +12,7 @@ npx playwright install chromium
 ## Running tests
 
 ```bash
-# Run tests against production (v2.virtualflybrain.org)
+# Run tests against production (v3.virtualflybrain.org)
 npm test
 
 # Run with the interactive UI (great for debugging)
@@ -38,7 +38,7 @@ npx playwright test --grep "search"
 
 The live site can be slow under load and `v2-dev` (or any other non-production server) is typically slower still. The config detects the target server from `VFB_BASE_URL` and applies a 3× multiplier to all timeouts when not on production:
 
-|                              | Production (v2) | v2-dev / other  |
+|                              | Production (v3) | v2-dev / other  |
 |------------------------------|-----------------|-----------------|
 | Test timeout                 | 120s            | 360s            |
 | Expect timeout               | 20s             | 60s             |
@@ -91,7 +91,7 @@ This is wired into both GitHub Actions workflows — every run renders the summa
 
 Two workflows are provided:
 
-- **Scheduled tests (v2 production)** — runs daily at 06:00 UTC against `v2.virtualflybrain.org`. The HTML report is published to GitHub Pages and uploaded as a workflow artifact.
+- **Scheduled tests (v3 production)** — runs daily at 06:00 UTC against `v3.virtualflybrain.org`. The HTML report is published to GitHub Pages and uploaded as a workflow artifact.
 - **Manual tests (any server)** — trigger manually via the Actions tab, specifying any base URL (defaults to `v2-dev.virtualflybrain.org`).
 - **Cleanup old artifacts** — runs weekly on Sunday at 03:00 UTC, deleting Actions artifacts older than 14 days. Also triggerable manually with a custom max-age, and writes a summary table of what was deleted to the run page.
 
