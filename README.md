@@ -205,16 +205,16 @@ Tests the Term Info panel content for six different VFB entity types. Each entit
 | shows license | "CC-BY" |
 | focus bar shows queries for the neuron | Focus bar contains "WEDPN2A_R" |
 
-#### `term-info-cluster.spec.ts` — scRNAseq cluster (FBlc0006494) (6 tests)
+#### `term-info-cluster.spec.ts` — scRNAseq cluster (VFBseq_00001616, AFCA head Kenyon cells) (6 tests)
 
 | Test | Description |
 |------|-------------|
-| shows name with cluster ID and semantic tags | "PNS_neurons", "FBlc0006494"; `Nervous_system`, `Cluster`, `Adult` tags |
+| shows name with cluster ID and semantic tags | "Kenyon cell cluster (Aging Fly Cell Atlas head)", "VFBseq_00001616"; `Nervous_system`, `Cluster`, `Adult` tags |
 | shows classification as transcriptional cell cluster | "transcriptional cell cluster" |
-| shows related individuals | "scRNAseq_2023_AFCA" (parent dataset) |
-| shows relationships with cell type composition | "PNS neuron" |
+| shows related individuals | "Aging Fly Cell Atlas head" (parent clustering) |
+| shows relationships with cell type composition | "adult Kenyon cell" |
 | shows query for genes | "Genes expressed" |
-| shows source | "scRNAseq_2023_AFCA" |
+| shows source | "scRNAseq data from Lu (2023)" |
 
 #### `term-info-neuron-class.spec.ts` — neuron class (FBbt_00100163 / adult pacemaker neuron) (6 tests)
 
